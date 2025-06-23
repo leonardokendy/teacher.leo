@@ -1,82 +1,243 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulário de Cadastro</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            margin: auto;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spring School Audio Player</title>
+  <style>
+    :root {
+      --primary: #0d47a1;
+      --secondary: #1976d2;
+      --light: #e3f2fd;
+      --text: #ffffff;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--light);
+      color: var(--primary);
+      text-align: center;
+    }
+    .container {
+      padding: 1rem;
+    }
+    .start-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .start-screen button {
+      width: 200px;
+      padding: 0.75rem;
+      font-size: 1rem;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .tab {
+      display: none;
+    }
+    .active {
+      display: block;
+    }
+    audio {
+      width: 100%;
+      max-width: 600px;
+      margin: 1rem auto;
+      display: block;
+    }
+    .controls, .lesson-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .horizontal-controls {
+      flex-direction: row;
+      justify-content: center;
+    }
+    button {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: var(--secondary);
+      color: var(--text);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: var(--primary);
+    }
+    .nav-buttons {
+      font-size: 1.3rem;
+      padding: 0.5rem 1.2rem;
+    }
+    .status {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Cadastro</h1>
-        <form>
-            <label for="nome">Nome</label>
-            <input type="text" id="nome" name="nome" required>
-
-            <label for="dataNascimento">Data de Nascimento</label>
-            <input type="date" id="dataNascimento" name="dataNascimento" required>
-
-            <label for="cidade">Cidade</label>
-            <input type="text" id="cidade" name="cidade" required>
-
-            <label for="nivelIngles">Nível de Inglês</label>
-            <select id="nivelIngles" name="nivelIngles" required>
-                <option value="">Selecione...</option>
-                <option value="A1">A1</option>
-                <option value="A2">A2</option>
-                <option value="B1">B1</option>
-                <option value="B2">B2</option>
-                <option value="C1">C1</option>
-                <option value="C2">C2</option>
-            </select>
-
-            <label for="telefone">Telefone de Contato</label>
-            <input type="tel" id="telefone" name="telefone" required pattern="[0-9]{2}-[0-9]{4}-[0-9]{4}" placeholder="XX-XXXX-XXXX">
-
-            <button type="submit">Cadastrar</button>
-        </form>
+  <div class="container" id="appContainer">
+    <div id="startScreen" class="start-screen">
+      <img src="https://springschool.me/wp-content/uploads/2020/12/SPRING-SCHOOL-LOGO-01.png" alt="Spring School Logo" style="max-width:200px;height:auto;margin-bottom:1rem;">
+      <button onclick="openTab('newyork')" style="background:#1976d2;">New York</button>
+      <button onclick="openTab('newyorkwb')" style="background:#1976d2;">New York Workbook</button>
+      <button onclick="openTab('london')" style="background:#e53935;">London</button>
+      <button onclick="openTab('londonwb')" style="background:#e53935;">London Workbook</button>
+      <button onclick="openTab('sydney')" style="background:#43a047;">Sydney</button>
+      <button onclick="openTab('sydneywb')" style="background:#43a047;">Sydney Workbook</button>
+      <p style="margin-top:2rem;font-size:0.8rem;color:#888;">beta version · Developed by Leo</p>
     </div>
+
+    <!-- Tabs -->
+    <div id="newyork" class="tab"></div>
+    <div id="newyorkwb" class="tab"></div>
+    <div id="london" class="tab"></div>
+    <div id="londonwb" class="tab"></div>
+    <div id="sydney" class="tab"></div>
+    <div id="sydneywb" class="tab"></div>
+  </div>
+
+  <script>
+    const books = {
+      newyork: { code: 'SB1L', base: 'http://springschool.me/qrcode/books/eb1b/', start: 1 },
+      newyorkwb: { code: 'wb2L', base: 'http://springschool.me/qrcode/books/wb1b/', start: 1 },
+      london: { code: 'B2L', base: 'http://springschool.me/qrcode/books/eb2/', start: 1 },
+      londonwb: { code: 'WB2L', base: 'http://springschool.me/qrcode/books/eb2/', start: 1 },
+      sydney: { code: 'B3L', base: 'http://springschool.me/qrcode/books/eb3/', start: 0 },
+      sydneywb: { code: 'WB3L', base: 'http://springschool.me/qrcode/books/eb3/', start: 1 }
+    };
+
+    const lessonLimits = {
+      SB1L: 14,
+      wb2L: 14,
+      B2L: 13,
+      WB2L: 13,
+      B3L: 10,
+      WB3L: 10
+    };
+
+    const maxActivities = 10;
+    let currentLesson, currentActivity, bookConfig;
+
+    function openTab(id) {
+      document.getElementById("startScreen").style.display = "none";
+      Object.keys(books).forEach(key => {
+        document.getElementById(key).style.display = "none";
+      });
+      const tab = document.getElementById(id);
+      tab.classList.add("active");
+      tab.style.display = "block";
+      renderTab(tab, books[id]);
+      document.getElementById("appContainer").style.backgroundColor = {
+        'SB1L': '#e3f2fd',
+        'wb2L': '#e3f2fd',
+        'B2L': '#ffebee',
+        'WB2L': '#ffebee',
+        'B3L': '#e8f5e9',
+        'WB3L': '#e8f5e9'
+      }[books[id].code] || '#ffffff';
+    }
+
+    function renderTab(container, config) {
+      const colors = {
+        'SB1L': {primary: '#0d47a1', secondary: '#1976d2'},
+        'wb2L': {primary: '#0d47a1', secondary: '#1976d2'},
+        'B2L': {primary: '#b71c1c', secondary: '#e53935'},
+        'WB2L': {primary: '#b71c1c', secondary: '#e53935'},
+        'B3L': {primary: '#1b5e20', secondary: '#43a047'},
+        'WB3L': {primary: '#1b5e20', secondary: '#43a047'}
+      };
+      const style = colors[config.code] || {primary: '#000', secondary: '#555'};
+      document.documentElement.style.setProperty('--primary', style.primary);
+      document.documentElement.style.setProperty('--secondary', style.secondary);
+      
+      container.innerHTML = `
+        <button onclick="goHome()" style="position:absolute;top:0.5rem;right:0.5rem;font-size:1.2rem;padding:0.3rem 0.7rem;background:#ccc;border:none;border-radius:50%;cursor:pointer;">🏠</button>
+        <h2>${formatTitle(config.code)}</h2>
+        <audio id="audioPlayer" controls></audio>
+        <div class="controls horizontal-controls">
+          <button class="nav-buttons" onclick="prevTrack()">⏮️</button>
+          <button class="nav-buttons" onclick="nextTrack()">⏭️</button>
+        </div>
+        <div class="status" id="status"></div>
+        <div class="lesson-buttons" id="lessonButtons"></div>
+      `;
+      currentLesson = config.start;
+      currentActivity = 1;
+      bookConfig = config;
+      createLessonButtons(config);
+      updateAudioSource();
+    }
+
+    function createLessonButtons(config) {
+      const container = document.getElementById("lessonButtons");
+      container.innerHTML = "";
+      for (let i = config.start; i <= lessonLimits[config.code]; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = `Lesson ${i}`;
+        btn.onclick = () => {
+          currentLesson = i;
+          currentActivity = 1;
+          updateAudioSource();
+        };
+        container.appendChild(btn);
+      }
+    }
+
+    function updateAudioSource() {
+      let lStr;
+      if (bookConfig.code === 'SB1L' || bookConfig.code === 'wb2L') {
+        lStr = currentLesson.toString().padStart(2, '0');
+      } else {
+        lStr = currentLesson.toString();
+      }
+      const aStr = currentActivity.toString().padStart(3, '0');
+      const url = `${bookConfig.base}${bookConfig.code}${lStr}_${aStr}.mp3`;
+      document.getElementById("audioPlayer").src = url;
+      document.getElementById("audioPlayer").load();
+      document.getElementById("status").textContent = `Lesson ${currentLesson}, Activity ${currentActivity}`;
+    }
+
+    function nextTrack() {
+      currentActivity++;
+      if (currentActivity > maxActivities) {
+        currentActivity = 1;
+        currentLesson++;
+        if (currentLesson > lessonLimits[bookConfig.code]) currentLesson = bookConfig.start;
+      }
+      updateAudioSource();
+    }
+
+    function prevTrack() {
+      currentActivity--;
+      if (currentActivity < 1) {
+        currentLesson--;
+        if (currentLesson < bookConfig.start) currentLesson = lessonLimits[bookConfig.code];
+        currentActivity = maxActivities;
+      }
+      updateAudioSource();
+    }
+
+    function formatTitle(code) {
+      if (code === "SB1L") return "New York";
+      if (code === "wb2L") return "New York Workbook";
+      if (code === "B2L") return "London";
+      if (code === "WB2L") return "London Workbook";
+      if (code === "B3L") return "Sydney";
+      if (code === "WB3L") return "Sydney Workbook";
+      return "Book";
+    }
+
+    function goHome() {
+      location.reload();
+    }
+  </script>
 </body>
 </html>

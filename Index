@@ -3,241 +3,1421 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Spring School Audio Player</title>
+  <title>Audio Player</title>
   <style>
-    :root {
-      --primary: #0d47a1;
-      --secondary: #1976d2;
-      --light: #e3f2fd;
-      --text: #ffffff;
-    }
     body {
+      font-family: Arial, sans-serif;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--light);
-      color: var(--primary);
+      background: #e3f2fd;
       text-align: center;
     }
-    .container {
-      padding: 1rem;
+    header {
+      background: #e3f2fd;
+      padding: 20px;
     }
-    .start-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-    }
-    .start-screen button {
-      width: 200px;
-      padding: 0.75rem;
-      font-size: 1rem;
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .tab {
-      display: none;
-    }
-    .active {
-      display: block;
-    }
-    audio {
-      width: 100%;
-      max-width: 600px;
-      margin: 1rem auto;
-      display: block;
-    }
-    .controls, .lesson-buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-    .horizontal-controls {
-      flex-direction: row;
-      justify-content: center;
+    header img {
+      max-width: 220px;
     }
     button {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      background-color: var(--secondary);
-      color: var(--text);
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background-color: var(--primary);
-    }
-    .nav-buttons {
-      font-size: 1.3rem;
-      padding: 0.5rem 1.2rem;
-    }
-    .status {
-      margin-top: 1rem;
+      display: block;
+      width: 85vw;
+      max-width: 400px;
+      margin: 15px auto;
+      padding: 18px;
+      font-size: 20px;
       font-weight: bold;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+        audio {
+      width: 100%;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      background: #fff;
+      padding: 10px 0;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.2);
+    }
+    #mainView {
+      padding-bottom: 80px;
     }
   </style>
 </head>
 <body>
-  <div class="container" id="appContainer">
-    <div id="startScreen" class="start-screen">
-      <img src="https://springschool.me/wp-content/uploads/2020/12/SPRING-SCHOOL-LOGO-01.png" alt="Spring School Logo" style="max-width:200px;height:auto;margin-bottom:1rem;">
-      <button onclick="openTab('newyork')" style="background:#1976d2;">New York</button>
-      <button onclick="openTab('newyorkwb')" style="background:#1976d2;">New York Workbook</button>
-      <button onclick="openTab('london')" style="background:#e53935;">London</button>
-      <button onclick="openTab('londonwb')" style="background:#e53935;">London Workbook</button>
-      <button onclick="openTab('sydney')" style="background:#43a047;">Sydney</button>
-      <button onclick="openTab('sydneywb')" style="background:#43a047;">Sydney Workbook</button>
-      <p style="margin-top:2rem;font-size:0.8rem;color:#888;">beta version · Developed by Leo</p>
-    </div>
+<div id="splash" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;transition:opacity 5s;">
+  <img src="https://springschool.me/wp-content/uploads/2020/12/SPRING-SCHOOL-LOGO-01.png" alt="Spring School Logo" style="width:60vw;max-width:300px;margin-bottom:20px;" />
+  <div style="font-size:12px;color:#999;">beta version · created by Leo</div>
+</div>
+<script>
+  window.addEventListener("DOMContentLoaded", () => {{
+    const splash = document.getElementById("splash");
+    splash.style.opacity = 1;
+    splash.addEventListener("click", () => {{
+      document.getElementById("appContent").style.display = "block";
+      document.getElementById("audioPlayer").style.display = "block";
+      splash.style.display = "none";
+      if (document.documentElement.requestFullscreen) {{
+        document.documentElement.requestFullscreen();
+      }}
+    }});
+  }});
+</script>
 
-    <!-- Tabs -->
-    <div id="newyork" class="tab"></div>
-    <div id="newyorkwb" class="tab"></div>
-    <div id="london" class="tab"></div>
-    <div id="londonwb" class="tab"></div>
-    <div id="sydney" class="tab"></div>
-    <div id="sydneywb" class="tab"></div>
-  </div>
+<div id="appContent" style="display:none;"><header>
+  <img src="https://springschool.me/wp-content/uploads/2020/12/SPRING-SCHOOL-LOGO-01.png" onclick="location.reload()" style="cursor:pointer;" alt="Spring School Logo"/>
+</header>
 
-  <script>
-    const books = {
-      newyork: { code: 'SB1L', base: 'http://springschool.me/qrcode/books/eb1b/', start: 1 },
-      newyorkwb: { code: 'wb2L', base: 'http://springschool.me/qrcode/books/wb1b/', start: 1 },
-      london: { code: 'B2L', base: 'http://springschool.me/qrcode/books/eb2/', start: 1 },
-      londonwb: { code: 'WB2L', base: 'http://springschool.me/qrcode/books/eb2/', start: 1 },
-      sydney: { code: 'B3L', base: 'http://springschool.me/qrcode/books/eb3/', start: 0 },
-      sydneywb: { code: 'WB3L', base: 'http://springschool.me/qrcode/books/eb3/', start: 1 }
-    };
+<div id="mainView"></div>
 
-    const lessonLimits = {
-      SB1L: 14,
-      wb2L: 14,
-      B2L: 13,
-      WB2L: 13,
-      B3L: 10,
-      WB3L: 10
-    };
+</div><audio id="audioPlayer" style="display:none;" controls>
+  <source id="audioSource" src="" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
 
-    const maxActivities = 10;
-    let currentLesson, currentActivity, bookConfig;
-
-    function openTab(id) {
-      document.getElementById("startScreen").style.display = "none";
-      Object.keys(books).forEach(key => {
-        document.getElementById(key).style.display = "none";
-      });
-      const tab = document.getElementById(id);
-      tab.classList.add("active");
-      tab.style.display = "block";
-      renderTab(tab, books[id]);
-      document.getElementById("appContainer").style.backgroundColor = {
-        'SB1L': '#e3f2fd',
-        'wb2L': '#e3f2fd',
-        'B2L': '#ffebee',
-        'WB2L': '#ffebee',
-        'B3L': '#e8f5e9',
-        'WB3L': '#e8f5e9'
-      }[books[id].code] || '#ffffff';
-    }
-
-    function renderTab(container, config) {
-      const colors = {
-        'SB1L': {primary: '#0d47a1', secondary: '#1976d2'},
-        'wb2L': {primary: '#0d47a1', secondary: '#1976d2'},
-        'B2L': {primary: '#b71c1c', secondary: '#e53935'},
-        'WB2L': {primary: '#b71c1c', secondary: '#e53935'},
-        'B3L': {primary: '#1b5e20', secondary: '#43a047'},
-        'WB3L': {primary: '#1b5e20', secondary: '#43a047'}
-      };
-      const style = colors[config.code] || {primary: '#000', secondary: '#555'};
-      document.documentElement.style.setProperty('--primary', style.primary);
-      document.documentElement.style.setProperty('--secondary', style.secondary);
-      
-      container.innerHTML = `
-        <button onclick="goHome()" style="position:absolute;top:0.5rem;right:0.5rem;font-size:1.2rem;padding:0.3rem 0.7rem;background:#ccc;border:none;border-radius:50%;cursor:pointer;">🏠</button>
-        <h2>${formatTitle(config.code)}</h2>
-        <audio id="audioPlayer" controls></audio>
-        <div class="controls horizontal-controls">
-          <button class="nav-buttons" onclick="prevTrack()">⏮️</button>
-          <button class="nav-buttons" onclick="nextTrack()">⏭️</button>
-        </div>
-        <div class="status" id="status"></div>
-        <div class="lesson-buttons" id="lessonButtons"></div>
-      `;
-      currentLesson = config.start;
-      currentActivity = 1;
-      bookConfig = config;
-      createLessonButtons(config);
-      updateAudioSource();
-    }
-
-    function createLessonButtons(config) {
-      const container = document.getElementById("lessonButtons");
-      container.innerHTML = "";
-      for (let i = config.start; i <= lessonLimits[config.code]; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = `Lesson ${i}`;
-        btn.onclick = () => {
-          currentLesson = i;
-          currentActivity = 1;
-          updateAudioSource();
-        };
-        container.appendChild(btn);
+<script>
+const data = {
+  "New York": {
+    "Lesson 0": [
+      {
+        "title": "Learning Super Fast",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L00_001.mp3"
+      },
+      {
+        "title": "ABC",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L00_003.mp3"
+      },
+      {
+        "title": "Numbers",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L00_004.mp3"
       }
-    }
-
-    function updateAudioSource() {
-      let lStr;
-      if (bookConfig.code === 'SB1L' || bookConfig.code === 'wb2L') {
-        lStr = currentLesson.toString().padStart(2, '0');
-      } else {
-        lStr = currentLesson.toString();
+    ],
+    "Lesson 1": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L01_001.mp3"
+      },
+      {
+        "title": "Hello! Nice to meet you!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L01_002.mp3"
+      },
+      {
+        "title": "Personal Information",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L01_003.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L01_004.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L01_005.mp3"
       }
-      const aStr = currentActivity.toString().padStart(3, '0');
-      const url = `${bookConfig.base}${bookConfig.code}${lStr}_${aStr}.mp3`;
-      document.getElementById("audioPlayer").src = url;
-      document.getElementById("audioPlayer").load();
-      document.getElementById("status").textContent = `Lesson ${currentLesson}, Activity ${currentActivity}`;
-    }
-
-    function nextTrack() {
-      currentActivity++;
-      if (currentActivity > maxActivities) {
-        currentActivity = 1;
-        currentLesson++;
-        if (currentLesson > lessonLimits[bookConfig.code]) currentLesson = bookConfig.start;
+    ],
+    "Lesson 2": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L02_001.mp3"
+      },
+      {
+        "title": "Solve the Mistery",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L02_002.mp3"
+      },
+      {
+        "title": "Where's Everything?",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L02_003.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L02_004.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L02_005.mp3"
       }
-      updateAudioSource();
-    }
-
-    function prevTrack() {
-      currentActivity--;
-      if (currentActivity < 1) {
-        currentLesson--;
-        if (currentLesson < bookConfig.start) currentLesson = lessonLimits[bookConfig.code];
-        currentActivity = maxActivities;
+    ],
+    "Lesson 3": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L03_001.mp3"
+      },
+      {
+        "title": "Daily Routine",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L03_002.mp3"
+      },
+      {
+        "title": "The Early Morning Show",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L03_003.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L03_004.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L03_005.mp3"
+      },
+      {
+        "title": "What's Up? Chocolate",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L03_006.mp3"
       }
-      updateAudioSource();
-    }
+    ],
+    "Lesson 4": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L04_001.mp3"
+      },
+      {
+        "title": "Brianna and Pumpkin",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L04_002.mp3"
+      },
+      {
+        "title": "Luke's Routine",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L04_003.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L04_004.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L04_005.mp3"
+      }
+    ],
+    "Lesson 5": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L05_001.mp3"
+      },
+      {
+        "title": "What are they doing?",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L05_002.mp3"
+      },
+      {
+        "title": "A Busy Day at School",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L05_003.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L05_004.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L05_005.mp3"
+      }
+    ],
+    "Lesson 6": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L06_001.mp3"
+      },
+      {
+        "title": "Aaron's Family Tree",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L06_002.mp3"
+      },
+      {
+        "title": "Father's Day Block Party pt.1",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L06_003.mp3"
+      },
+      {
+        "title": "Father's Day Block Party pt.2",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L06_004.mp3"
+      },
+      {
+        "title": "Reading Comprehension",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L06_005.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L06_006.mp3"
+      },
+      {
+        "title": "What's Up?  Beach Time",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L06_007.mp3"
+      }
+    ],
+    "Lesson 7": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L07_001.mp3"
+      },
+      {
+        "title": "Aaron's Neighborhood",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L07_002.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L07_003.mp3"
+      },
+      {
+        "title": "Aaron's Vacation - The Zoo",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L07_004.mp3"
+      },
+      {
+        "title": "Aaron's Vacation - The Park",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L07_005.mp3"
+      }
+    ],
+    "Lesson 8": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L08_001.mp3"
+      },
+      {
+        "title": "Dream Tip",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L08_002.mp3"
+      },
+      {
+        "title": "Designing the Dress",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L08_003.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L08_004.mp3"
+      }
+    ],
+    "Lesson 9": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L09_001.mp3"
+      },
+      {
+        "title": "Airport Passenger Regulations",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L09_002.mp3"
+      },
+      {
+        "title": "Summer Vacation",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L09_003.mp3"
+      },
+      {
+        "title": "Listening 5",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L09_004.mp3"
+      },
+      {
+        "title": "Listening 6",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L09_005.mp3"
+      },
+      {
+        "title": "Fast Fashion Trend",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L09_006.mp3"
+      }
+    ],
+    "Lesson 10": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L10_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L10_002.mp3"
+      },
+      {
+        "title": "A Bad Day in College",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L10_003.mp3"
+      },
+      {
+        "title": "Making Plans for the Weekend",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L10_004.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L10_005.mp3"
+      }
+    ],
+    "Lesson 11": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L11_001.mp3"
+      },
+      {
+        "title": "Selling the House",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L11_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L11_003.mp3"
+      },
+      {
+        "title": "What a Difficult Week!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L11_004.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L11_005.mp3"
+      }
+    ],
+    "Lesson 12": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L12_001.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L12_002.mp3"
+      },
+      {
+        "title": "My Trip to Japan",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L12_003.mp3"
+      },
+      {
+        "title": "Robin Journey as a Teacher",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L12_004.mp3"
+      },
+      {
+        "title": "Listening 9",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L12_005.mp3"
+      },
+      {
+        "title": "Listening 10",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L12_006.mp3"
+      },
+      {
+        "title": "Why Traveling is Good for You!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L12_007.mp3"
+      }
+    ],
+    "Lesson 13": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L13_001.mp3"
+      },
+      {
+        "title": "Next Week's Weather Forecast",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L13_002.mp3"
+      },
+      {
+        "title": "Carlos' Trip",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L13_003.mp3"
+      },
+      {
+        "title": "Say What",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L13_004.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L13_005.mp3"
+      }
+    ],
+    "Lesson 14": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L14_001.mp3"
+      },
+      {
+        "title": "John's Week's Schedule",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L14_002.mp3"
+      },
+      {
+        "title": "The 8 Ball Game",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L14_003.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L14_004.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L14_005.mp3"
+      },
+      {
+        "title": "Everyone has a Story in Life",
+        "url": "https://springschool.me/qrcode/books/eb1b/SB1L14_006.mp3"
+      }
+    ]
+  },
+  "New York Workbook": {
+    "Lesson 1": [
+      {
+        "title": "D. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L01_001.mp3"
+      },
+      {
+        "title": "E. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L01_002.mp3"
+      },
+      {
+        "title": "F. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L01_003.mp3"
+      }
+    ],
+    "Lesson 2": [
+      {
+        "title": "C. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L02_001.mp3"
+      },
+      {
+        "title": "F. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L02_002.mp3"
+      },
+      {
+        "title": "G. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L02_003.mp3"
+      }
+    ],
+    "Lesson 3": [
+      {
+        "title": "D. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L03_001.mp3"
+      },
+      {
+        "title": "E. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L03_002.mp3"
+      },
+      {
+        "title": "J. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L03_003.mp3"
+      }
+    ],
+    "Lesson 4": [
+      {
+        "title": "C. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L04_001.mp3"
+      },
+      {
+        "title": "I. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L04_002.mp3"
+      }
+    ],
+    "Lesson 5": [
+      {
+        "title": "C. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L05_001.mp3"
+      },
+      {
+        "title": "G. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L05_002.mp3"
+      },
+      {
+        "title": "H. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L05_003.mp3"
+      }
+    ],
+    "Lesson 6": [
+      {
+        "title": "E. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L06_001.mp3"
+      }
+    ],
+    "Lesson 7": [
+      {
+        "title": "H. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L07_001.mp3"
+      },
+      {
+        "title": "I. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L07_002.mp3"
+      }
+    ],
+    "Lesson 8": [
+      {
+        "title": "D. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L08_001.mp3"
+      },
+      {
+        "title": "H. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L08_002.mp3"
+      }
+    ],
+    "Lesson 9": [
+      {
+        "title": "C. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L09_001.mp3"
+      },
+      {
+        "title": "E. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L09_002.mp3"
+      },
+      {
+        "title": "H. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L09_003.mp3"
+      }
+    ],
+    "Lesson 10": [
+      {
+        "title": "F. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L10_001.mp3"
+      },
+      {
+        "title": "G. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L10_002.mp3"
+      }
+    ],
+    "Lesson 11": [
+      {
+        "title": "B. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L11_001.mp3"
+      },
+      {
+        "title": "G. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L11_002.mp3"
+      }
+    ],
+    "Lesson 12": [
+      {
+        "title": "B. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L12_001.mp3"
+      },
+      {
+        "title": "G. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L12_002.mp3"
+      }
+    ],
+    "Lesson 13": [
+      {
+        "title": "E. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L13_001.mp3"
+      },
+      {
+        "title": "F. Say What?!",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L13_002.mp3"
+      }
+    ],
+    "Lesson 14": [
+      {
+        "title": "E. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L14_001.mp3"
+      },
+      {
+        "title": "F. Listening",
+        "url": "https://springschool.me/qrcode/books/wb1b/wb2L14_002.mp3"
+      }
+    ]
+  },
+  "London": {
+    "Lesson 1": [
+      {
+        "title": "What are you going to learn?",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L0_001.mp3"
+      },
+      {
+        "title": "Write the Correct Order of Events",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L0_002.mp3"
+      },
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L1_001.mp3"
+      },
+      {
+        "title": "A New Beginning",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L1_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L1_003.mp3"
+      },
+      {
+        "title": "Birthday Gifts",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L1_004.mp3"
+      }
+    ],
+    "Lesson 2": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L2_001.mp3"
+      },
+      {
+        "title": "The 20th Anniversary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L2_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L2_003.mp3"
+      },
+      {
+        "title": "Food Trucks",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L2_004.mp3"
+      }
+    ],
+    "Lesson 3": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L3_001.mp3"
+      },
+      {
+        "title": "Metric System",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L3_002.mp3"
+      },
+      {
+        "title": "Shopping Day",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L3_003.mp3"
+      },
+      {
+        "title": "Flea Market",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L3_004.mp3"
+      },
+      {
+        "title": "Increasing Your Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L3_005.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L3_006.mp3"
+      }
+    ],
+    "Lesson 4": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L4_001.mp3"
+      },
+      {
+        "title": "Antic Town",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L4_002.mp3"
+      },
+      {
+        "title": "A Difficult Decision",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L4_003.mp3"
+      },
+      {
+        "title": "Plans for the Holidays",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L4_004.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L4_005.mp3"
+      }
+    ],
+    "Lesson 5": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L5_001.mp3"
+      },
+      {
+        "title": "Shopping Mall",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L5_002.mp3"
+      },
+      {
+        "title": "How to Live a Healthy Life",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L5_003.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L5_004.mp3"
+      }
+    ],
+    "Lesson 6": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L6_001.mp3"
+      },
+      {
+        "title": "The Best Party Ever",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L6_002.mp3"
+      },
+      {
+        "title": "A Very Special Visit to the Zoo",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L6_003.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L6_004.mp3"
+      }
+    ],
+    "Lesson 7": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L7_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L7_002.mp3"
+      },
+      {
+        "title": "My Trip to London",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L7_003.mp3"
+      }
+    ],
+    "Lesson 8": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L8_001.mp3"
+      },
+      {
+        "title": "They're all Different",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L8_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L8_003.mp3"
+      },
+      {
+        "title": "Consequences",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L8_004.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L8_005.mp3"
+      },
+      {
+        "title": "Transportation Around the Globe",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L8_006.mp3"
+      }
+    ],
+    "Lesson 9": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L9_001.mp3"
+      },
+      {
+        "title": "The School's Nation Fair",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L9_002.mp3"
+      },
+      {
+        "title": "5 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L9_003.mp3"
+      },
+      {
+        "title": "6 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L9_004.mp3"
+      }
+    ],
+    "Lesson 10": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L10_001.mp3"
+      },
+      {
+        "title": "A Very Frustrating Weekend",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L10_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L10_003.mp3"
+      }
+    ],
+    "Lesson 11": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L11_001.mp3"
+      },
+      {
+        "title": "My First Medical Checkup",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L11_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L11_003.mp3"
+      },
+      {
+        "title": "On a Diet",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L11_004.mp3"
+      }
+    ],
+    "Lesson 12": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L12_001.mp3"
+      },
+      {
+        "title": "Sports Week",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L12_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L12_003.mp3"
+      }
+    ],
+    "Lesson 13": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L13_001.mp3"
+      },
+      {
+        "title": "Climbing Mount Fuji",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L13_002.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L13_003.mp3"
+      },
+      {
+        "title": "Do you know what agony-aunt is?",
+        "url": "https://springschool.me/qrcode/books/eb2/B2L13_004.mp3"
+      }
+    ]
+  },
+  "London Workbook": {
+    "Lesson 1": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L1_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L1_002.mp3"
+      }
+    ],
+    "Lesson 2": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L2_001.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L2_002.mp3"
+      }
+    ],
+    "Lesson 3": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L3_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L3_002.mp3"
+      }
+    ],
+    "Lesson 4": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L4_001.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L4_002.mp3"
+      }
+    ],
+    "Lesson 5": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L5_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L5_002.mp3"
+      }
+    ],
+    "Lesson 6": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L6_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L6_002.mp3"
+      }
+    ],
+    "Lesson 7": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L7_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L7_002.mp3"
+      }
+    ],
+    "Lesson 8": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L8_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L8_002.mp3"
+      }
+    ],
+    "Lesson 9": [
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L9_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L9_002.mp3"
+      }
+    ],
+    "Lesson 10": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L10_001.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L10_002.mp3"
+      }
+    ],
+    "Lesson 11": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L11_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L11_002.mp3"
+      }
+    ],
+    "Lesson 12": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L12_001.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L12_002.mp3"
+      }
+    ],
+    "Lesson 13": [
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L13_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb2/WB2L13_002.mp3"
+      }
+    ]
+  },
+  "Sydney": {
+    "Lesson 1": [
+      {
+        "title": "About Being Mature",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L0_001.mp3"
+      },
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L1_001.mp3"
+      },
+      {
+        "title": "A Day in Ana's Life",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L1_002.mp3"
+      },
+      {
+        "title": "A Typical Day at The Wilson's House",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L1_003.mp3"
+      },
+      {
+        "title": "Listening 6",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L1_004.mp3"
+      },
+      {
+        "title": "Listening 7",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L1_005.mp3"
+      }
+    ],
+    "Lesson 2": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L2_001.mp3"
+      },
+      {
+        "title": "My last Day of High School",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L2_002.mp3"
+      },
+      {
+        "title": "6 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L2_003.mp3"
+      },
+      {
+        "title": "7 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L2_004.mp3"
+      },
+      {
+        "title": "My Favorite Memory",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L2_005.mp3"
+      }
+    ],
+    "Lesson 3": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L3_001.mp3"
+      },
+      {
+        "title": "Going to the Amusement Park",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L3_003.mp3"
+      },
+      {
+        "title": "NHS on Clinical Trials",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L3_004.mp3"
+      },
+      {
+        "title": "6 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L3_005.mp3"
+      },
+      {
+        "title": "7 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L3_006.mp3"
+      },
+      {
+        "title": "Wonders of the World",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L3_007.mp3"
+      },
+      {
+        "title": "English Around the Globe",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L3_008.mp3"
+      }
+    ],
+    "Lesson 4": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_002.mp3"
+      },
+      {
+        "title": "7 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_003.mp3"
+      },
+      {
+        "title": "8 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_004.mp3"
+      },
+      {
+        "title": "9 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_005.mp3"
+      }
+    ],
+    "Lesson 4": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_001.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_002.mp3"
+      },
+      {
+        "title": "7 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_003.mp3"
+      },
+      {
+        "title": "8 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_004.mp3"
+      },
+      {
+        "title": "9 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_005.mp3"
+      },
+      {
+        "title": "Marcus Loves Australia",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L4_006.mp3"
+      }],
+    "Lesson 5": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L5_001.mp3"
+      },
+      {
+        "title": "An Incredible Dad",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L5_002.mp3"
+      },
+      {
+        "title": "Their Careers",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L5_003.mp3"
+      },
+      {
+        "title": "7 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L5_004.mp3"
+      },
+      {
+        "title": "8 Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L5_005.mp3"
+      }
+    ],
+    "Lesson 6": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_001.mp3"
+      },
+      {
+        "title": "Terrible Vacation",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_002.mp3"
+      },
+      {
+        "title": "A Long Journey",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_003.mp3"
+      },
+      {
+        "title": "Listening",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_004.mp3"
+      },
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_005.mp3"
+      },
+      {
+        "title": "Exploring New Places",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_006.mp3"
+      },
+      {
+        "title": "Fun Fact",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_007.mp3"
+      },
+      {
+        "title": "English Around the Globe",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L6_008.mp3"
+      }
+    ],
+    "Lesson 7": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L7_001.mp3"
+      },
+      {
+        "title": "Listening 3",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L7_002.mp3"
+      },
+      {
+        "title": "Listening 7",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L7_003.mp3"
+      },
+      {
+        "title": "New Year's Resolution",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L7_004.mp3"
+      }
+    ],
+    "Lesson 8": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L8_001.mp3"
+      },
+      {
+        "title": "Term Paper Presentation",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L8_002.mp3"
+      },
+      {
+        "title": "Listening 6",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L8_003.mp3"
+      },
+      {
+        "title": "Listening 7",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L8_004.mp3"
+      },
+      {
+        "title": "Lucy the Ballet Dancer",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L8_005.mp3"
+      },
+      {
+        "title": "Growing Up",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L8_006.mp3"
+      },
+      {
+        "title": "English Around the Globe",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L8_007.mp3"
+      }
+    ],
+    "Lesson 9": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L9_001.mp3"
+      },
+      {
+        "title": "Matthew and Jane",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L9_002.mp3"
+      },
+      {
+        "title": "Reading Comprehension",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L9_003.mp3"
+      },
+      {
+        "title": "Listening 5",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L9_004.mp3"
+      },
+      {
+        "title": "Listening 6",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L9_005.mp3"
+      },
+      {
+        "title": "Getting Used to New Things in Life",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L9_006.mp3"
+      }
+    ],
+    "Lesson 10": [
+      {
+        "title": "Vocabulary",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L10_001.mp3"
+      },
+      {
+        "title": "So Different Yet So Similar",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L10_002.mp3"
+      },
+      {
+        "title": "Listening 5",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L10_003.mp3"
+      },
+      {
+        "title": "Listening 6",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L10_004.mp3"
+      },
+      {
+        "title": "Lena's Passion",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L10_005.mp3"
+      },
+      {
+        "title": "English Around the Globe",
+        "url": "https://springschool.me/qrcode/books/eb3/B3L10_006.mp3"
+      }
+    ]
+  },
+  "Sydney Workbook": {
+    "Lesson 1": [
+      {
+        "title": "Listening D",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L1_001.mp3"
+      },
+      {
+        "title": "Listening E",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L1_002.mp3"
+      }
+    ],
+    "Lesson 2": [
+      {
+        "title": "Listening E",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L2_001.mp3"
+      },
+      {
+        "title": "G. Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L2_002.mp3"
+      }
+    ],
+    "Lesson 3": [
+      {
+        "title": "Listening A",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L3_001.mp3"
+      },
+      {
+        "title": "Listening E",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L3_002.mp3"
+      }
+    ],
+    "Lesson 4": [
+      {
+        "title": "E. Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L4_001.mp3"
+      },
+      {
+        "title": "Listening G",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L4_002.mp3"
+      }
+    ],
+    "Lesson 5": [
+      {
+        "title": "Listening F",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L5_001.mp3"
+      },
+      {
+        "title": "Listening H",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L5_002.mp3"
+      }
+    ],
+    "Lesson 6": [
+      {
+        "title": "Listening E",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L6_001.mp3"
+      },
+      {
+        "title": "Listening G",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L6_002.mp3"
+      }
+    ],
+    "Lesson 7": [
+      {
+        "title": "Listening H",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L7_001.mp3"
+      },
+      {
+        "title": "Listening I",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L7_002.mp3"
+      }
+    ],
+    "Lesson 8": [
+      {
+        "title": "Listening D",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L8_001.mp3"
+      },
+      {
+        "title": "Listening I",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L8_002.mp3"
+      }
+    ],
+    "Lesson 9": [
+      {
+        "title": "Say What?!",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L9_001.mp3"
+      }
+    ],
+    "Lesson 10": [
+      {
+        "title": "Listening E",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L10_001.mp3"
+      },
+      {
+        "title": "Listening F",
+        "url": "https://springschool.me/qrcode/books/eb3/WB3L10_002.mp3"
+      }
+    ]
+  }
+};
+const bookColors = {"New York": "#1976d2", "New York Workbook": "#1976d2", "London": "#b71c1c", "London Workbook": "#b71c1c", "Sydney": "#43a047", "Sydney Workbook": "#43a047"};
 
-    function formatTitle(code) {
-      if (code === "SB1L") return "New York";
-      if (code === "wb2L") return "New York Workbook";
-      if (code === "B2L") return "London";
-      if (code === "WB2L") return "London Workbook";
-      if (code === "B3L") return "Sydney";
-      if (code === "WB3L") return "Sydney Workbook";
-      return "Book";
-    }
+const mainView = document.getElementById("mainView");
+const audioPlayer = document.getElementById("audioPlayer");
+const audioSource = document.getElementById("audioSource");
 
-    function goHome() {
-      location.reload();
-    }
-  </script>
+function clearMain() {
+  mainView.innerHTML = '';
+}
+
+function playAudio(url) {
+  audioSource.src = url;
+  audioPlayer.load();
+  audioPlayer.play();
+}
+
+function renderBooks() {
+  clearMain();
+  for (let book in data) {
+    const btn = document.createElement("button");
+    btn.textContent = book;
+    const baseColor = bookColors[book] || "#607d8b";
+    btn.style.backgroundColor = baseColor + "cc";
+    btn.onclick = () => renderLessons(book);
+    mainView.appendChild(btn);
+  }
+}
+
+function renderLessons(book) {
+  clearMain();
+  const back = document.createElement("button");
+  back.textContent = book;
+  back.style.backgroundColor = bookColors[book] || "#607d8b";
+  back.onclick = renderBooks;
+  mainView.appendChild(back);
+
+  const lessons = data[book];
+  for (let lesson in lessons) {
+    const btn = document.createElement("button");
+    btn.textContent = lesson;
+    const baseColor = bookColors[book] || "#607d8b";
+    btn.style.backgroundColor = baseColor + "cc";
+    btn.onclick = () => renderActivities(book, lesson);
+    mainView.appendChild(btn);
+  }
+}
+
+function renderActivities(book, lesson) {
+  clearMain();
+  const back = document.createElement("button");
+  back.textContent = book + " / " + lesson;
+  back.style.backgroundColor = bookColors[book] || "#607d8b";
+  back.onclick = () => renderLessons(book);
+  mainView.appendChild(back);
+
+  const activities = data[book][lesson];
+  for (let item of activities) {
+    const btn = document.createElement("button");
+    btn.textContent = item.title;
+    const baseColor = bookColors[book] || "#607d8b";
+    btn.style.backgroundColor = baseColor + "cc";
+    btn.onclick = () => playAudio(item.url);
+    mainView.appendChild(btn);
+  }
+}
+
+renderBooks();
+</script>
+
 </body>
 </html>
